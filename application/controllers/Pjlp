@@ -1,0 +1,200 @@
+<?php
+defined('BASEPATH') or exit('No direct script access allowed');
+
+class Pjlp extends CI_Controller
+{
+    public function __construct()
+    {
+        parent::__construct();
+        $this->load->library('form_validation');
+        $this->load->model('User_model', 'user');
+        $this->load->model('Laporan_model', 'laporan');
+    }
+
+    public function index()
+    {
+        $data['user'] = $this->db->get_where('users', ['nopeg' =>
+        $this->session->userdata('nopeg')])->row_array();
+
+        $data['userMember'] = $this->user->getUser();
+
+        $data['title'] = 'Dashboard';
+        $this->load->view('templates/pjlp/pjlp_header', $data);
+        $this->load->view('templates/pjlp/pjlp_sidebar', $data);
+        $this->load->view('templates/pjlp/pjlp_topbar', $data);
+        $this->load->view('pjlp/index', $data);
+        $this->load->view('templates/pjlp/pjlp_footer');
+    }
+
+    public function profile()
+    {
+        $data['user'] = $this->db->get_where('users', ['nopeg' =>
+        $this->session->userdata('nopeg')])->row_array();
+
+        $data['userMember'] = $this->user->getUser();
+
+        $data['title'] = 'Profile';
+        $this->load->view('templates/pjlp/pjlp_header', $data);
+        $this->load->view('templates/pjlp/pjlp_sidebar', $data);
+        $this->load->view('templates/pjlp/pjlp_topbar', $data);
+        $this->load->view('pjlp/profile', $data);
+        $this->load->view('templates/pjlp/pjlp_footer');
+    }
+
+    public function updateProfil()
+    {
+
+        if ($this->form_validation->run() == FALSE) {
+            $data['user'] = $this->db->get_where('users', ['nopeg' =>
+            $this->session->userdata('nopeg')])->row_array();
+
+            $data['title'] = 'Edit Profile';
+            $this->load->view('templates/pjlp/pjlp_header', $data);
+            $this->load->view('templates/pjlp/pjlp_sidebar', $data);
+            $this->load->view('templates/pjlp/pjlp_topbar', $data);
+            $this->load->view('pjlp/edit_profile', $data);
+            $this->load->view('templates/pjlp/pjlp_footer');
+        } else {
+            $data = array(
+                'nama' => $this->input->post('nama'),
+                'tempat' => $this->input->post('tempat_lahir'),
+                'tgl_lahir' => $this->input->post('tgl_lahir'),
+                'nik' => $this->input->post('nik'),
+                'jk' => $this->input->post('jk'),
+                'alamat' => $this->input->post('alamat'),
+                'tel' => $this->input->post('telp'),
+                'nopeg' => $this->input->post('nopeg')
+            );
+            var_dump($data);
+            die;
+
+            // cek ada gambar di upload
+            // if (!empty($_FILES['image']['name'])) {
+            //     $config['allowed_type'] = 'png|jpg';
+            //     $config['max_size']     = '2048';
+            //     $config['upload_path'] = './assets/img/profile/';
+
+            //     $this->load->library('upload', $config);
+
+            //     if ($this->upload->do_upload('image')) {
+            //         $old_image = $data['users']['image'];
+            //         if ($old_image != 'default.jpg') {
+            //             unlink(FCPATH . 'assets/img/profile/' . $old_image);
+            //         }
+
+            //         $new_image = $this->upload->data('file_name');
+            //         $this->db->set('image', $new_image);
+            //     } else {
+            //         $error = 'file upload tidak sesuai';
+            //         $this->session->set_flashdata('error', '<div class="alert alert-danger" role="alert">' . $error . '</div>');
+            //         redirect('pjlp/edit');
+            //     }
+            // }
+            $this->user->updateProfile($data);
+
+            $this->session->set_flashdata('error', '<div class="alert alert-danger" role="alert">
+                Profile berhasil dirubah! </div>');
+            redirect('pjlp/profile');
+        }
+    }
+
+    public function laporan()
+    {
+        $data['user'] = $this->db->get_where('users', ['nopeg' =>
+        $this->session->userdata('nopeg')])->row_array();
+
+        $nopeg = $this->session->userdata('nopeg');
+        $data['laporan'] = $this->laporan->getlaporan($nopeg);
+
+        $data['title'] = 'Laporan';
+        $this->load->view('templates/pjlp/pjlp_header', $data);
+        $this->load->view('templates/pjlp/pjlp_sidebar', $data);
+        $this->load->view('templates/pjlp/pjlp_topbar', $data);
+        $this->load->view('pjlp/laporan');
+        $this->load->view('templates/pjlp/pjlp_footer');
+    }
+
+    public function tambahlaporan()
+    {
+        $this->form_validation->set_rules('uraian', 'uraian', 'required', [
+            'required' => 'wajib diisi'
+        ]);
+
+        $this->form_validation->set_rules('lokasi', 'lokasi', 'required', [
+            'required' => 'wajib diisi'
+        ]);
+
+
+        if ($this->form_validation->run() == false) {
+            $data['user'] = $this->db->get_where('users', ['nopeg' =>
+            $this->session->userdata('nopeg')])->row_array();
+
+            $data['title'] = 'Tambah Laporan';
+            $this->load->view('templates/pjlp/pjlp_header', $data);
+            $this->load->view('pjlp/tambahlaporan', $data);
+            $this->load->view('templates/pjlp/pjlp_footer');
+        } else {
+            $data = [
+                'nopeg' => htmlspecialchars($this->input->post('nopeg', true)),
+                'tgl' => htmlspecialchars($this->input->post('tgl', true)),
+                'sumber' => htmlspecialchars($this->input->post('sumber', true)),
+                'uraian' => htmlspecialchars($this->input->post('uraian', true)),
+                'kondisi' => htmlspecialchars($this->input->post('kondisi', true)),
+                'lokasi' => htmlspecialchars($this->input->post('lokasi', true)),
+                'progress' => htmlspecialchars($this->input->post('progress', true)),
+                'image' => $this->input->post('image', true)
+            ];
+
+            $this->db->insert('laporan', $data);
+            $this->session->set_flashdata('massage', '<div class="alert alert-success" role="alert">
+            laporan berhasil ditambahkan! </div>');
+            redirect('pjlp/tambahlaporan');
+        }
+    }
+
+    public function deletelaporan($id)
+    {
+        $this->db->query("DELETE FROM laporan WHERE id = $id");
+        $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Laporan telah dihapus</div>');
+        redirect('pjlp/laporan');
+    }
+
+    // public function jadwal()
+    // {
+    //     $data['user'] = $this->db->get_where('users', ['nopeg' =>
+    //     $this->session->userdata('nopeg')])->row_array();
+
+    //     $data['title'] = 'Jadwal';
+    //     $this->load->view('templates/pjlp/pjlp_header', $data);
+    //     $this->load->view('templates/pjlp/pjlp_sidebar', $data);
+    //     $this->load->view('templates/pjlp/pjlp_topbar', $data);
+    //     $this->load->view('pjlp/jadwal');
+    //     $this->load->view('templates/pjlp/pjlp_footer');
+    // }
+
+    // public function cuti()
+    // {
+    //     $data['user'] = $this->db->get_where('users', ['nopeg' =>
+    //     $this->session->userdata('nopeg')])->row_array();
+
+    //     $data['title'] = 'Cuti';
+    //     $this->load->view('templates/pjlp/pjlp_header', $data);
+    //     $this->load->view('templates/pjlp/pjlp_sidebar', $data);
+    //     $this->load->view('templates/pjlp/pjlp_topbar', $data);
+    //     $this->load->view('pjlp/cuti');
+    //     $this->load->view('templates/pjlp/pjlp_footer');
+    // }
+
+    // public function pengajuancuti()
+    // {
+    //     $data['user'] = $this->db->get_where('users', ['nopeg' =>
+    //     $this->session->userdata('nopeg')])->row_array();
+
+    //     $data['title'] = 'Pengajuan Cuti';
+    //     $this->load->view('templates/pjlp/pjlp_header', $data);
+    //     $this->load->view('templates/pjlp/pjlp_sidebar', $data);
+    //     $this->load->view('templates/pjlp/pjlp_topbar', $data);
+    //     $this->load->view('pjlp/pengajuancuti');
+    //     $this->load->view('templates/pjlp/pjlp_footer');
+    // }
+}
